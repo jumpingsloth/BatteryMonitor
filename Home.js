@@ -6,16 +6,16 @@ import * as Progress from "react-native-progress";
 
 export default function Home() {
 	// const [time, setTime] = useState(Date.now());
-	const [batteryLevel, setBatteryLevel] = useState(null);
+	const [battery, setBattery] = useState(null);
 	const [powerState, setPowerState] = useState(false);
 
 	let _subscription = null;
 
 	const _subscribe = async () => {
-		const _batteryLevel = await Battery.getBatteryLevelAsync();
-		setBatteryLevel(_batteryLevel);
-		_subscription = Battery.addBatteryLevelListener(({ _batteryLevel }) => {
-			setBatteryLevel(_batteryLevel);
+		const batteryLevel = await Battery.getBatteryLevelAsync();
+		setBattery(batteryLevel);
+		_subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
+			setBattery(batteryLevel);
 			console.log("batteryLevel changed!", batteryLevel);
 		});
 	};
@@ -35,8 +35,6 @@ export default function Home() {
 		};
 	}, []);
 
-	const Separator = () => <View style={styles.separator} />;
-
 	return (
 		<View style={styles.container}>
 			<View
@@ -46,7 +44,7 @@ export default function Home() {
 					justifyContent: "center",
 					backgroundColor: powerState
 						? "rgb(52, 199, 89)"
-						: "rgb(199, 199, 204)",
+						: "rgb(209, 209, 214)",
 				}}
 			>
 				<Text style={styles.text}>
@@ -56,13 +54,13 @@ export default function Home() {
 
 			<View
 				style={{
-					flex: 10,
+					flex: 15,
 					alignItems: "center",
 					justifyContent: "center",
 				}}
 			>
 				<Progress.Circle
-					progress={batteryLevel}
+					progress={battery}
 					size={180}
 					borderWidth={2}
 					thickness={7}
@@ -82,21 +80,6 @@ export default function Home() {
 					/>
 				</View>
 			</View>
-
-			<View
-				style={{
-					flex: 2,
-					alignItems: "center",
-					justifyContent: "center",
-					backgroundColor: powerState
-						? "rgb(52, 199, 89)"
-						: "rgb(199, 199, 204)",
-				}}
-			>
-				<Text style={styles.text}>
-					{powerState ? "Enabled" : "Disabled"}
-				</Text>
-			</View>
 		</View>
 	);
 }
@@ -104,13 +87,10 @@ export default function Home() {
 const styles = {
 	container: {
 		flex: 1,
-		// alignItems: "center",
-		// justifyContent: "center",
 		flexDirection: "column",
 	},
 	text: {
-		fontSize: 20,
-		marginTop: 35,
+		fontSize: 15,
 	},
 	toggleButton: {
 		marginTop: 60,

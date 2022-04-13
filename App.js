@@ -1,120 +1,40 @@
-// import { StatusBar } from "expo-status-bar";
-import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, Button, Switch } from "react-native";
-import * as Battery from "expo-battery";
-import * as Progress from "react-native-progress";
+import * as React from "react";
+import { Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import Home from "./Home.js";
+import Settings from "./Settings.js";
+
+const Tab = createBottomTabNavigator();
 
 export default function App() {
-	// const [time, setTime] = useState(Date.now());
-	const [batteryLevel, setBatteryLevel] = useState(null);
-	const [powerState, setPowerState] = useState(false);
-
-	let _subscription = null;
-
-	const _subscribe = async () => {
-		const _batteryLevel = await Battery.getBatteryLevelAsync();
-		setBatteryLevel(_batteryLevel);
-		_subscription = Battery.addBatteryLevelListener(({ _batteryLevel }) => {
-			setBatteryLevel(_batteryLevel);
-			console.log("batteryLevel changed!", batteryLevel);
-		});
-	};
-
-	const _unsubscribe = () => {
-		_subscription && _subscription.remove();
-		_subscription = null;
-	};
-
-	useEffect(() => {
-		// const interval = setInterval(() => setTime(Date.now()), 10 * 1000);
-		_subscribe();
-
-		return () => {
-			// clearInterval(interval);
-			_unsubscribe();
-		};
-	}, []);
-
-	const Separator = () => <View style={styles.separator} />;
-
 	return (
-		<View style={styles.container}>
-			<View
-				style={{
-					flex: 1,
-					alignItems: "center",
-					justifyContent: "center",
-					backgroundColor: powerState
-						? "rgb(52, 199, 89)"
-						: "rgb(199, 199, 204)",
-				}}
-			>
-				<Text style={styles.text}>
-					{powerState ? "Enabled" : "Disabled"}
-				</Text>
-			</View>
+		<NavigationContainer>
+			<Tab.Navigator
+				screenOptions={({ route }) => ({
+					tabBarIcon: ({ focused, color, size }) => {
+						let iconName;
 
-			<View
-				style={{
-					flex: 10,
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
-				<Progress.Circle
-					progress={batteryLevel}
-					size={180}
-					borderWidth={2}
-					thickness={7}
-					showsText={true}
-					formatText={(progress) => {
-						return (progress * 100).toFixed(0) + " %";
-					}}
-					strokeCap="round"
-				/>
+						if (route.name === "Home") {
+							iconName = "ios-home";
+						} else if (route.name === "Settings") {
+							iconName = "ios-settings";
+						}
 
-				<View style={styles.toggleButton}>
-					<Switch
-						onValueChange={() => {
-							setPowerState((prev) => !prev);
-						}}
-						value={powerState}
-					/>
-				</View>
-			</View>
-
-			<View
-				style={{
-					flex: 2,
-					alignItems: "center",
-					justifyContent: "center",
-					backgroundColor: powerState
-						? "rgb(52, 199, 89)"
-						: "rgb(199, 199, 204)",
-				}}
+						return (
+							<Ionicons
+								name={iconName}
+								size={size}
+								color={color}
+							/>
+						);
+					},
+				})}
 			>
-				<Text style={styles.text}>
-					{powerState ? "Enabled" : "Disabled"}
-				</Text>
-			</View>
-		</View>
+				<Tab.Screen name="Home" component={Home} />
+				<Tab.Screen name="Settings" component={Settings} />
+			</Tab.Navigator>
+		</NavigationContainer>
 	);
 }
-
-const styles = {
-	container: {
-		flex: 1,
-		// alignItems: "center",
-		// justifyContent: "center",
-		flexDirection: "column",
-	},
-	text: {
-		fontSize: 20,
-		marginTop: 35,
-	},
-	toggleButton: {
-		marginTop: 60,
-	},
-};
