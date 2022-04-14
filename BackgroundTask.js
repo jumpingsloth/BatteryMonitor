@@ -2,10 +2,12 @@ import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 
 export async function startAutoMode(taskname) {
-	if (!TaskManager.isTaskRegisteredAsync(taskname)) {
-		console.log("registered task");
+	console.log("start automode");
+	let isRegistered = await TaskManager.isTaskRegisteredAsync(taskname);
+	if (!isRegistered) {
+		console.log("registering task " + taskname);
 		return BackgroundFetch.registerTaskAsync(taskname, {
-			minimumInterval: 5,
+			minimumInterval: 10,
 			startOnBoot: true,
 			stopOnTerminate: false,
 		});
@@ -15,8 +17,10 @@ export async function startAutoMode(taskname) {
 }
 
 export async function stopAutoMode(taskname) {
-	if (TaskManager.isTaskRegisteredAsync(taskname)) {
-		console.log("unregistered task");
+	console.log("stop automode");
+	let isRegistered = await TaskManager.isTaskRegisteredAsync(taskname);
+	if (isRegistered) {
+		console.log("unregistering task " + taskname);
 		return BackgroundFetch.unregisterTaskAsync(taskname);
 	} else {
 		return -1;

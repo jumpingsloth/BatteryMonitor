@@ -8,8 +8,9 @@ import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 
 const TASK_NAME = "BATTERY_MONITOR";
-TaskManager.defineTask(TASK_NAME, () => {
-	console.log("test");
+TaskManager.defineTask(TASK_NAME, async () => {
+	alert("test");
+	return BackgroundFetch.BackgroundFetchResult.NewData;
 });
 
 export default function Home() {
@@ -45,12 +46,13 @@ export default function Home() {
 	}, []);
 
 	useEffect(async () => {
-		if (autoMode) {
+		console.log("auto mode state (handleAutoMode)" + autoMode);
+		if (autoMode == true) {
 			let ret = await startAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Auto Mode already activated");
 			}
-		} else {
+		} else if (autoMode == false) {
 			let ret = await stopAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Auto Mode already deactivated");
@@ -112,8 +114,11 @@ export default function Home() {
 					<View style={styles.modeSwitch}>
 						<Text style={styles.modeText}>Auto Mode</Text>
 						<Switch
-							onValueChange={() => {
-								setAutoMode((prev) => !prev);
+							onValueChange={(val) => {
+								console.log(
+									"current auto mode toggle state: " + val
+								);
+								setAutoMode(val);
 								setPowerState(false);
 							}}
 							value={autoMode}
