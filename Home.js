@@ -3,11 +3,20 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, Button, Switch } from "react-native";
 import * as Battery from "expo-battery";
 import * as Progress from "react-native-progress";
+import { startAutoMode, stopAutoMode } from "./BackgroundTask";
+import * as BackgroundFetch from "expo-background-fetch";
+import * as TaskManager from "expo-task-manager";
+
+const TASK_NAME = "BATTERY_MONITOR";
+TaskManager.defineTask(TASK_NAME, () => {
+	console.log("test");
+});
 
 export default function Home() {
 	// const [time, setTime] = useState(Date.now());
 	const [battery, setBattery] = useState(null);
 	const [powerState, setPowerState] = useState(false);
+	const [autoMode, setAutoMode] = useState(false);
 
 	let _subscription = null;
 
@@ -35,6 +44,20 @@ export default function Home() {
 		};
 	}, []);
 
+	useEffect(async () => {
+		if (autoMode) {
+			let ret = await startAutoMode(TASK_NAME);
+			if (ret == -1) {
+				console.log("Auto Mode already activated");
+			}
+		} else {
+			let ret = await stopAutoMode(TASK_NAME);
+			if (ret == -1) {
+				console.log("Auto Mode already deactivated");
+			}
+		}
+	}, [autoMode]);
+
 	return (
 		<View style={styles.container}>
 			<View
@@ -55,29 +78,65 @@ export default function Home() {
 			<View
 				style={{
 					flex: 15,
-					alignItems: "center",
-					justifyContent: "center",
+					paddingVertical: 10,
+					paddingHorizontal: 20,
+					flexDirection: "column",
 				}}
 			>
-				<Progress.Circle
-					progress={battery}
-					size={180}
-					borderWidth={2}
-					thickness={7}
-					showsText={true}
-					formatText={(progress) => {
-						return (progress * 100).toFixed(0) + " %";
+				<View
+					style={{
+						flex: 1,
+						alignItems: "center",
+						justifyContent: "center",
 					}}
-					strokeCap="round"
-				/>
-
-				<View style={styles.toggleButton}>
-					<Switch
-						onValueChange={() => {
-							setPowerState((prev) => !prev);
+				>
+					<Progress.Circle
+						progress={battery}
+						size={180}
+						borderWidth={2}
+						thickness={7}
+						showsText={true}
+						formatText={(progress) => {
+							return (progress * 100).toFixed(0) + " %";
 						}}
-						value={powerState}
+						strokeCap="round"
 					/>
+				</View>
+
+				<View
+					style={{
+						flex: 1,
+						justifyContent: "center",
+					}}
+				>
+					<View style={styles.modeSwitch}>
+						<Text style={styles.modeText}>Auto Mode</Text>
+						<Switch
+							onValueChange={() => {
+								setAutoMode((prev) => !prev);
+								setPowerState(false);
+							}}
+							value={autoMode}
+						/>
+					</View>
+
+					<View style={styles.modeSwitch}>
+						<Text
+							style={[
+								styles.modeText,
+								{ color: autoMode ? "grey" : "black" },
+							]}
+						>
+							Manual Toggle
+						</Text>
+						<Switch
+							disabled={autoMode ? true : false}
+							onValueChange={() => {
+								setPowerState((prev) => !prev);
+							}}
+							value={powerState}
+						/>
+					</View>
 				</View>
 			</View>
 		</View>
@@ -87,12 +146,23 @@ export default function Home() {
 const styles = {
 	container: {
 		flex: 1,
-		flexDirection: "column",
+		// flexDirection: "column",
 	},
 	text: {
 		fontSize: 15,
 	},
-	toggleButton: {
-		marginTop: 60,
+	modeSwitch: {
+		height: 50,
+		backgroundColor: "rgb(229, 229, 234)",
+		paddingVertical: 10,
+		paddingHorizontal: 20,
+		borderRadius: 10,
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginVertical: 16,
+		flexDirection: "row",
+	},
+	modeText: {
+		fontSize: 15,
 	},
 };

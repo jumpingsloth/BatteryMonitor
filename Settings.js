@@ -22,7 +22,7 @@ function TextEditComponent(props) {
 		line: {
 			flexDirection: "row",
 			marginTop: 12,
-			// justifyContent: "center",
+			justifyContent: "center",
 			alignItems: "center",
 		},
 	};
