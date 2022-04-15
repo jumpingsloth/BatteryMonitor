@@ -1,11 +1,12 @@
 // import { StatusBar } from "expo-status-bar";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, Text, View, Button, Switch } from "react-native";
 import * as Battery from "expo-battery";
 import * as Progress from "react-native-progress";
-import { startAutoMode, stopAutoMode } from "./BackgroundTask";
+import { startAutoMode, stopAutoMode, callTapoDevice } from "./BackgroundTask";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
+import { useDidMountEffect } from "./custom_hooks.js";
 
 const TASK_NAME = "BATTERY_MONITOR";
 TaskManager.defineTask(TASK_NAME, async () => {
@@ -45,20 +46,28 @@ export default function Home() {
 		};
 	}, []);
 
-	useEffect(async () => {
-		console.log("auto mode state (handleAutoMode)" + autoMode);
-		if (autoMode == true) {
+	useDidMountEffect(async () => {
+		console.log("auto mode state (handleAutoMode): " + autoMode);
+		if (autoMode) {
 			let ret = await startAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Auto Mode already activated");
 			}
-		} else if (autoMode == false) {
+		} else {
 			let ret = await stopAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Auto Mode already deactivated");
 			}
 		}
 	}, [autoMode]);
+
+	useDidMountEffect(async () => {
+		if (powerState) {
+			callTapoDevice(true);
+		} else {
+			callTapoDevice(false);
+		}
+	}, [powerState]);
 
 	return (
 		<View style={styles.container}>
@@ -119,7 +128,6 @@ export default function Home() {
 									"current auto mode toggle state: " + val
 								);
 								setAutoMode(val);
-								setPowerState(false);
 							}}
 							value={autoMode}
 						/>
