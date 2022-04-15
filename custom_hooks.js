@@ -1,10 +1,20 @@
 import React, { useEffect, useRef } from "react";
 
-export const useDidMountEffect = (func, deps) => {
-	const didMount = useRef(false);
+export const useDidMountEffect = (func, deps, cycles = 1 /*, on_init */) => {
+	const mountingCycles = useRef(0);
 
 	useEffect(() => {
-		if (didMount.current) func();
-		else didMount.current = true;
+		if (mountingCycles.current >= cycles) {
+			func();
+		} else {
+			// if (on_init) {
+			// 	on_init(() => {
+			// 		didMount.current = true;
+			// 	});
+			// } else {
+			// 	didMount.current = true;
+			// }
+			++mountingCycles.current;
+		}
 	}, deps);
 };

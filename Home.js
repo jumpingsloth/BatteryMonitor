@@ -36,12 +36,12 @@ export default function Home() {
 		_subscription = null;
 	};
 
-	useEffect(() => {
-		// const interval = setInterval(() => setTime(Date.now()), 10 * 1000);
-		_subscribe();
+	useEffect(async () => {
+		await _subscribe();
+		const tapo_state = await callTapoDevice();
+		setPowerState(tapo_state.device_on);
 
 		return () => {
-			// clearInterval(interval);
 			_unsubscribe();
 		};
 	}, []);
@@ -63,8 +63,8 @@ export default function Home() {
 
 	useDidMountEffect(async () => {
 		let res = await callTapoDevice(powerState);
-		if (res == -1) {
-			setPowerState((prev) => !prev);
+		if (res.device_on !== powerState) {
+			setPowerState(res.device_on);
 		}
 	}, [powerState]);
 
