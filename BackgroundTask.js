@@ -45,5 +45,10 @@ export async function callTapoDevice(on_off) {
 		body: postData,
 	});
 
-	console.log(res.json());
+	const json_data = await res.json();
+	console.log(json_data);
+
+	if (json_data.device_on !== on_off) {
+		return -1;
+	}
 }
