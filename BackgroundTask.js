@@ -1,8 +1,6 @@
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
-import * as tapo from "tp-link-tapo-connect";
-
-// const fs = require("fs");
+import * as SecureStore from "expo-secure-store";
 
 export async function startAutoMode(taskname) {
 	console.log("start automode");
@@ -30,27 +28,22 @@ export async function stopAutoMode(taskname) {
 	}
 }
 
-function get_credentials() {
-	// let data = fs.readFileSync("credentials.txt");
-	// let json_data = data.toJSON();
-	// let email = data.email;
-	// let password = data.password;
-
-	return ["", ""];
-}
-
 export async function callTapoDevice(on_off) {
-	const [email, password] = get_credentials();
-
-	const cloudToken = await tapo.cloudLogin(email, password);
-	const devices = await tapo.listDevices(cloudToken);
-	let studio_device = devices.find((device) => {
-		return device.deviceName == "Studio";
+	let postData = JSON.stringify({
+		email: await SecureStore.getItemAsync("email"),
+		password: await SecureStore.getItemAsync("password"),
+		devicename: await SecureStore.getItemAsync("devicename"),
+		state: on_off,
 	});
 
-	const deviceToken = await tapo.loginDevice(email, password, studio_device);
-	const getDeviceInfoResponse = await tapo.getDeviceInfo(deviceToken);
-	console.log(getDeviceInfoResponse);
+	const res = await fetch(await SecureStore.getItemAsync("server"), {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"Content-Length": postData.length,
+		},
+		body: postData,
+	});
 
-	await tapo.turnOn(deviceToken);
+	console.log(res.json());
 }

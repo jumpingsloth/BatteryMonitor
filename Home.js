@@ -62,10 +62,9 @@ export default function Home() {
 	}, [autoMode]);
 
 	useDidMountEffect(async () => {
-		if (powerState) {
-			callTapoDevice(true);
-		} else {
-			callTapoDevice(false);
+		let res = await callTapoDevice(powerState);
+		if (res == -1) {
+			setPowerState((prev) => !prev);
 		}
 	}, [powerState]);
 

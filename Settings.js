@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import * as SecureStore from "expo-secure-store";
+import { ScrollView, TouchableOpacity } from "react-native";
+import { useDidMountEffect } from "./custom_hooks.js";
+
 import {
 	StyleSheet,
 	Text,
@@ -16,70 +20,182 @@ function TextEditComponent(props) {
 			padding: 10,
 			borderRadius: 10,
 		},
-		edit: {
-			padding: 20,
+		container: {
+			padding: 15,
 		},
 		line: {
-			flexDirection: "row",
-			marginTop: 12,
-			justifyContent: "center",
-			alignItems: "center",
+			marginTop: 10,
 		},
 	};
 
 	return (
-		<View style={styles.edit}>
+		<View style={styles.container}>
 			<Text style={styles.text}>{props.name}</Text>
 			<View style={styles.line}>
-				<View style={{ flex: 9 }}>
-					<TextInput
-						style={styles.input}
-						onChangeText={props.update}
-						value={props.value.toString()}
-						keyboardType="numeric"
-					/>
-				</View>
-
-				<View style={{ flex: 2 }}>
-					<Button title="Done" onPress={Keyboard.dismiss}></Button>
-				</View>
+				<TextInput
+					style={styles.input}
+					onChangeText={props.update}
+					value={props.value ? props.value.toString() : ""}
+					keyboardType={
+						props.keyboardType ? props.keyboardType : "default"
+					}
+					secureTextEntry={props.secureTextEntry}
+				/>
 			</View>
 		</View>
 	);
 }
 
+async function getValueFor(key) {
+	let result = await SecureStore.getItemAsync(key);
+	return result;
+}
+
+async function save(key, value) {
+	await SecureStore.setItemAsync(key, value);
+}
+
 export default function Settings() {
 	const Separator = () => <View style={styles.separator} />;
 
-	const [upperLimit, setUpperLimit] = useState(0);
-	const [lowerLimit, setLowerLimit] = useState(0);
+	const [upperLimit, setUpperLimit] = useState(null);
+	const [lowerLimit, setLowerLimit] = useState(null);
+	const [email, setEmail] = useState(null);
+	const [password, setPassword] = useState(null);
+	const [devicename, setDevicename] = useState(null);
+	const [server, setServer] = useState(null);
+
+	const [showBanner, setShowBanner] = useState(false);
+
+	useEffect(async () => {
+		setUpperLimit(await getValueFor("upperLimit"));
+		setLowerLimit(await getValueFor("lowerLimit"));
+		setEmail(await getValueFor("email"));
+		setPassword(await getValueFor("password"));
+		setDevicename(await getValueFor("devicename"));
+		setServer(await getValueFor("server"));
+	}, []);
+
+	const onEditDone = async () => {
+		await save("lowerLimit", lowerLimit ? lowerLimit.toString() : "");
+		await save("upperLimit", upperLimit ? upperLimit.toString() : "");
+		await save("email", email ? email.toString() : "");
+		await save("password", password ? password.toString() : "");
+		await save("devicename", devicename ? devicename.toString() : "");
+		await save("server", server ? server.toString() : "");
+
+		setShowBanner(true);
+	};
+
+	useDidMountEffect(() => {
+		if (showBanner) {
+			setTimeout(() => {
+				setShowBanner(false);
+			}, 3000);
+		}
+	}, [showBanner]);
 
 	return (
-		<View style={styles.container}>
-			<TextEditComponent
-				name="Upper Battery Limit %"
-				value={upperLimit}
-				update={setUpperLimit}
-			/>
-			<TextEditComponent
-				name="Lower Battery Limit %"
-				value={lowerLimit}
-				update={setLowerLimit}
-			/>
-		</View>
+		<ScrollView
+			style={styles.container}
+			contentContainerStyle={styles.contentContainer}
+		>
+			{showBanner && (
+				<View style={styles.banner}>
+					<Text style={styles.bannerText}>Save Successfull</Text>
+				</View>
+			)}
+
+			<View style={{ paddingVertical: 20 }}>
+				<TextEditComponent
+					name="Upper Battery Limit %"
+					value={upperLimit}
+					update={setUpperLimit}
+					keyboardType="numeric"
+				/>
+				<TextEditComponent
+					name="Lower Battery Limit %"
+					value={lowerLimit}
+					update={setLowerLimit}
+					keyboardType="numeric"
+				/>
+				<TextEditComponent
+					name="Email"
+					value={email}
+					update={setEmail}
+					keyboardType="email-address"
+				/>
+				<TextEditComponent
+					name="Password"
+					value={password}
+					update={setPassword}
+					secureTextEntry={true}
+				/>
+
+				<TextEditComponent
+					name="Device Name"
+					value={devicename}
+					update={setDevicename}
+				/>
+
+				<TextEditComponent
+					name="Server URL"
+					value={server}
+					update={setServer}
+				/>
+
+				<TouchableOpacity
+					style={styles.saveButton}
+					onPress={onEditDone}
+				>
+					<Text style={styles.saveButtonText}>Save Changes</Text>
+				</TouchableOpacity>
+			</View>
+		</ScrollView>
 	);
 }
 
 const styles = {
 	container: {
-		flex: 1,
-		paddingVertical: 20,
 		// alignItems: "center",
+	},
+	contentContainer: {
+		flex: 1,
 		// justifyContent: "center",
+		// alignItems: "center",
 	},
 	text: {
 		fontSize: 15,
 		fontWeight: "bold",
+	},
+	saveButton: {
+		marginTop: 50,
+		backgroundColor: "rgb(0, 122, 255)",
+		padding: 10,
+		color: "#fff",
+		borderRadius: 10,
+		width: 120,
+		// marginHorizontal: "20%",
+		height: 50,
+		alignSelf: "center",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	saveButtonText: {
+		color: "#fff",
+	},
+	banner: {
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: "rgb(174, 174, 178)",
+		marginHorizontal: 10,
+		marginTop: 10,
+		borderRadius: 20,
+		height: 50,
+	},
+	bannerText: {
+		color: "#fff",
+		fontSize: 15,
 	},
 	separator: {
 		marginVertical: 8,
