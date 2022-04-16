@@ -1,10 +1,10 @@
 {
 	"expo": {
 		"name": "BatteryMonitor",
-		"slug": "BatteryMonitor",
+		"slug": "battery-monitor",
 		"version": "1.0.0",
 		"orientation": "portrait",
-		"icon": "./assets/icon.png",
+		"icon": "./assets/BatteryMonitor.png",
 		"splash": {
 			"image": "./assets/splash.png",
 			"resizeMode": "contain",
@@ -18,13 +18,17 @@
 			"supportsTablet": true,
 			"infoPlist": {
 				"UIBackgroundModes": ["location", "fetch"]
-			}
+			},
+			"bundleIdentifier": "dev.jumpingsloth.batterymonitor",
+			"buildNumber": "1.0.0"
 		},
 		"android": {
 			"adaptiveIcon": {
 				"foregroundImage": "./assets/adaptive-icon.png",
 				"backgroundColor": "#FFFFFF"
-			}
+			},
+			"package": "dev.jumpingsloth.batterymonitor",
+			"versionCode": 1
 		},
 		"web": {
 			"favicon": "./assets/favicon.png"
