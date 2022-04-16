@@ -27,6 +27,7 @@
 				"foregroundImage": "./assets/adaptive-icon.png",
 				"backgroundColor": "#FFFFFF"
 			},
+			"softwareKeyboardLayoutMode": "pan",
 			"package": "dev.jumpingsloth.batterymonitor",
 			"versionCode": 1
 		},

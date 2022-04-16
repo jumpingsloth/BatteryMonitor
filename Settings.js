@@ -105,6 +105,7 @@ export default function Settings() {
 			style={styles.container}
 			contentContainerStyle={styles.contentContainer}
 			resetScrollToCoords={{ x: 0, y: 0 }}
+			enableOnAndroid={true}
 		>
 			{showBanner && (
 				<View style={styles.banner}>

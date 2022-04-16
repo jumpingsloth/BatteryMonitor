@@ -32,6 +32,10 @@ let setAutoModeFn = () => {
 	console.log("State not yet initialized");
 };
 
+let handle_power_state_fn = () => {
+	console.log("State not yet initialized");
+};
+
 async function check_battery_level() {
 	let batteryLevel = await Battery.getBatteryLevelAsync();
 	let batteryLevelPercent = batteryLevel * 100;
@@ -53,11 +57,11 @@ async function check_battery_level() {
 
 	if (batteryLevel >= upperLimit) {
 		setPowerStateFn(false);
+		handle_power_state_fn(false);
 	} else if (batteryLevel <= lowerLimit) {
 		setPowerStateFn(true);
+		handle_power_state_fn(true);
 	}
-
-	handle_power_state();
 }
 
 export default function Home() {
@@ -89,7 +93,7 @@ export default function Home() {
 
 	useEffect(async () => {
 		await _subscribe();
-		await handle_power_state();
+		await update_power_state();
 
 		return () => {
 			_unsubscribe();
@@ -102,22 +106,60 @@ export default function Home() {
 			await check_battery_level();
 			let ret = await startAutoMode(TASK_NAME);
 			if (ret == -1) {
-				console.log("Auto Mode already activated");
+				console.log("Cannot start auto mode");
 			}
 		} else {
 			setPowerState(false);
+			handle_power_state(false);
 			let ret = await stopAutoMode(TASK_NAME);
 			if (ret == -1) {
-				console.log("Auto Mode already deactivated");
+				console.log("Cannot stop auto mode");
 			}
 		}
 	}, [autoMode]);
 
-	const handle_power_state = async () => {
+	const handle_power_state = async (val) => {
 		setRefreshing(true);
 		let res;
 		try {
-			res = await callTapoDevice(powerState);
+			console.log(val);
+			res = await callTapoDevice(val);
+			setPowerState(res.device_on);
+			setRefreshing(false);
+		} catch (error) {
+			Alert.alert(
+				"Connection",
+				"Could not connect to Tapo device.\nDid you enter correct data?",
+				[
+					{
+						text: "OK",
+						onPress: () => {
+							setRefreshing(false);
+							setPowerState(false);
+							return;
+						},
+					},
+					{
+						text: "Show Error",
+						onPress: () => {
+							setRefreshing(false);
+							Alert.alert("Error:", error.toString());
+							return;
+						},
+					},
+				]
+			);
+			setRefreshing(false);
+		}
+	};
+
+	handle_power_state_fn = handle_power_state;
+
+	const update_power_state = async () => {
+		setRefreshing(true);
+		let res;
+		try {
+			res = await callTapoDevice(null);
 			if (res.device_on !== powerState) {
 				setPowerState(res.device_on);
 			}
@@ -150,7 +192,7 @@ export default function Home() {
 	};
 
 	const onRefresh = useCallback(async () => {
-		handle_power_state();
+		await update_power_state();
 	}, []);
 
 	return (
@@ -236,9 +278,13 @@ export default function Home() {
 							</Text>
 							<Switch
 								disabled={autoMode ? true : false}
-								onValueChange={async () => {
-									setPowerState((prev) => !prev);
-									await handle_power_state();
+								onValueChange={async (val) => {
+									console.log("value change: " + val);
+									setPowerState(val);
+									console.log(
+										"after set power state: " + powerState
+									);
+									await handle_power_state(val);
 								}}
 								value={powerState}
 							/>
