@@ -56,6 +56,8 @@ async function check_battery_level() {
 	} else if (batteryLevel <= lowerLimit) {
 		setPowerStateFn(true);
 	}
+
+	handle_power_state();
 }
 
 export default function Home() {

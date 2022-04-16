@@ -17,14 +17,18 @@
     "expo": "~44.0.0",
     "expo-background-fetch": "~10.1.0",
     "expo-battery": "~6.1.0",
+    "expo-crypto": "~10.1.1",
+    "expo-secure-store": "~11.1.0",
     "expo-status-bar": "~1.2.0",
     "expo-task-manager": "~10.1.0",
+    "expo-updates": "~0.11.6",
     "react": "17.0.1",
     "react-bootstrap": "^2.2.3",
     "react-dom": "17.0.1",
     "react-native": "0.64.3",
     "react-native-background-fetch": "^2.0.8",
     "react-native-crypto": "^2.2.0",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-progress": "^5.0.0",
     "react-native-randombytes": "^3.6.1",
     "react-native-safe-area-context": "3.3.2",
@@ -32,9 +36,7 @@
     "react-native-svg": "12.1.1",
     "react-native-vector-icons": "^9.1.0",
     "react-native-web": "0.17.1",
-    "tp-link-tapo-connect": "^1.0.6",
-    "expo-crypto": "~10.1.1",
-    "expo-secure-store": "~11.1.0"
+    "tp-link-tapo-connect": "^1.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"

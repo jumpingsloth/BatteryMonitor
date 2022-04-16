@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
-import { ScrollView, TouchableOpacity } from "react-native";
+import {
+	ScrollView,
+	TouchableOpacity,
+	KeyboardAvoidingView,
+} from "react-native";
 import { useDidMountEffect } from "./custom_hooks.js";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import {
 	StyleSheet,
@@ -96,9 +101,10 @@ export default function Settings() {
 	}, [showBanner]);
 
 	return (
-		<ScrollView
+		<KeyboardAwareScrollView
 			style={styles.container}
 			contentContainerStyle={styles.contentContainer}
+			resetScrollToCoords={{ x: 0, y: 0 }}
 		>
 			{showBanner && (
 				<View style={styles.banner}>
@@ -151,7 +157,7 @@ export default function Settings() {
 					<Text style={styles.saveButtonText}>Save Changes</Text>
 				</TouchableOpacity>
 			</View>
-		</ScrollView>
+		</KeyboardAwareScrollView>
 	);
 }
 
