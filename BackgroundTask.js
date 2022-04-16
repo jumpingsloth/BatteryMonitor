@@ -1,32 +1,4 @@
-import * as BackgroundFetch from "expo-background-fetch";
-import * as TaskManager from "expo-task-manager";
 import * as SecureStore from "expo-secure-store";
-
-export async function startAutoMode(taskname) {
-	console.log("start automode");
-	try {
-		console.log("registering task " + taskname);
-		return BackgroundFetch.registerTaskAsync(taskname, {
-			minimumInterval: 60 * 15,
-			startOnBoot: true,
-			stopOnTerminate: false,
-		});
-	} catch (error) {
-		console.log(error.toString());
-		return -1;
-	}
-}
-
-export async function stopAutoMode(taskname) {
-	console.log("stop automode");
-	try {
-		console.log("unregistering task " + taskname);
-		return BackgroundFetch.unregisterTaskAsync(taskname);
-	} catch (error) {
-		console.log(error.toString());
-		return -1;
-	}
-}
 
 export async function callTapoDevice(on_off) {
 	let postData = JSON.stringify({

@@ -13,109 +13,71 @@ import {
 import * as Battery from "expo-battery";
 import * as Progress from "react-native-progress";
 import { startAutoMode, stopAutoMode, callTapoDevice } from "./BackgroundTask";
-import * as BackgroundFetch from "expo-background-fetch";
-import * as TaskManager from "expo-task-manager";
 import { useDidMountEffect } from "./custom_hooks.js";
 import * as SecureStore from "expo-secure-store";
-
-const TASK_NAME = "BATTERY_MONITOR";
-TaskManager.defineTask(TASK_NAME, async () => {
-	check_battery_level();
-	return BackgroundFetch.BackgroundFetchResult.NewData;
-});
-
-let setPowerStateFn = () => {
-	console.log("State not yet initialized");
-};
-
-let setAutoModeFn = () => {
-	console.log("State not yet initialized");
-};
-
-let handle_power_state_fn = () => {
-	console.log("State not yet initialized");
-};
-
-async function check_battery_level() {
-	let batteryLevel = await Battery.getBatteryLevelAsync();
-	let batteryLevelPercent = batteryLevel * 100;
-	let upperLimit = await SecureStore.getItemAsync("upperLimit");
-	let lowerLimit = await SecureStore.getItemAsync("lowerLimit");
-
-	if (!(upperLimit && lowerLimit)) {
-		Alert.alert("Auto Mode", "Cannot read battery level or limit data.", [
-			{
-				text: "OK",
-				onPress: () => {
-					setAutoModeFn(false);
-					return;
-				},
-			},
-		]);
-		return;
-	}
-
-	if (batteryLevel >= upperLimit) {
-		setPowerStateFn(false);
-		handle_power_state_fn(false);
-	} else if (batteryLevel <= lowerLimit) {
-		setPowerStateFn(true);
-		handle_power_state_fn(true);
-	}
-}
 
 export default function Home() {
 	// const [time, setTime] = useState(Date.now());
 	const [battery, setBattery] = useState(null);
 	const [powerState, setPowerState] = useState(false);
-	setPowerStateFn = setPowerState;
 	const [autoMode, setAutoMode] = useState(false);
-	setAutoModeFn = setAutoMode;
 
 	const [showBanner, setShowBanner] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
 
-	let _subscription = null;
+	async function check_battery_level() {
+		let batteryLevel = await Battery.getBatteryLevelAsync();
+		let batteryLevelPercent = batteryLevel * 100;
+		let upperLimit = await SecureStore.getItemAsync("upperLimit");
+		let lowerLimit = await SecureStore.getItemAsync("lowerLimit");
 
-	const _subscribe = async () => {
-		const batteryLevel = await Battery.getBatteryLevelAsync();
+		if (!(upperLimit && lowerLimit)) {
+			Alert.alert("Battery", "Cannot read battery level or limit data.", [
+				{
+					text: "OK",
+					onPress: () => {
+						setAutoMode(false);
+						return;
+					},
+				},
+			]);
+			return;
+		}
+
 		setBattery(batteryLevel);
-		_subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-			setBattery(batteryLevel);
-			console.log("batteryLevel changed!", batteryLevel);
-		});
-	};
 
-	const _unsubscribe = () => {
-		_subscription && _subscription.remove();
-		_subscription = null;
-	};
+		if (!autoMode) {
+			return;
+		}
+
+		// auto mode
+		if (batteryLevelPercent >= upperLimit) {
+			setPowerState(false);
+			handle_power_state(false);
+		} else if (batteryLevelPercent <= lowerLimit) {
+			setPowerState(true);
+			handle_power_state(true);
+		}
+	}
+
+	let battery_interval = null;
 
 	useEffect(async () => {
-		await _subscribe();
+		await check_battery_level();
+
+		battery_interval = setInterval(async () => {
+			await check_battery_level();
+		}, 1000 * 60 * 4);
+
 		await update_power_state();
 
 		return () => {
-			_unsubscribe();
+			clearInterval(battery_interval);
 		};
 	}, []);
 
 	useDidMountEffect(async () => {
-		console.log("auto mode state (handleAutoMode): " + autoMode);
-		if (autoMode) {
-			await check_battery_level();
-			let ret = await startAutoMode(TASK_NAME);
-			if (ret == -1) {
-				console.log("Cannot start auto mode");
-			}
-		} else {
-			setPowerState(false);
-			handle_power_state(false);
-			let ret = await stopAutoMode(TASK_NAME);
-			if (ret == -1) {
-				console.log("Cannot stop auto mode");
-			}
-		}
+		check_battery_level();
 	}, [autoMode]);
 
 	const handle_power_state = async (val) => {
@@ -153,16 +115,12 @@ export default function Home() {
 		}
 	};
 
-	handle_power_state_fn = handle_power_state;
-
 	const update_power_state = async () => {
 		setRefreshing(true);
 		let res;
 		try {
 			res = await callTapoDevice(null);
-			if (res.device_on !== powerState) {
-				setPowerState(res.device_on);
-			}
+			setPowerState(res.device_on);
 			setRefreshing(false);
 		} catch (error) {
 			Alert.alert(
