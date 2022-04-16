@@ -7,7 +7,6 @@ export async function startAutoMode(taskname) {
 	try {
 		console.log("registering task " + taskname);
 		return BackgroundFetch.registerTaskAsync(taskname, {
-			minimumInterval: 60 * 15,
 			startOnBoot: true,
 			stopOnTerminate: false,
 		});

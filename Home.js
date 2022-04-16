@@ -9,6 +9,7 @@ import {
 	ScrollView,
 	RefreshControl,
 	Alert,
+	AppState,
 } from "react-native";
 import * as Battery from "expo-battery";
 import * as Progress from "react-native-progress";
@@ -20,6 +21,7 @@ import * as SecureStore from "expo-secure-store";
 
 const TASK_NAME = "BATTERY_MONITOR";
 TaskManager.defineTask(TASK_NAME, async () => {
+	console.log(new Date.getTime());
 	check_battery_level();
 	return BackgroundFetch.BackgroundFetchResult.NewData;
 });
@@ -33,6 +35,10 @@ let setAutoModeFn = () => {
 };
 
 let handle_power_state_fn = () => {
+	console.log("State not yet initialized");
+};
+
+let setBatteryFn = () => {
 	console.log("State not yet initialized");
 };
 
@@ -55,10 +61,12 @@ async function check_battery_level() {
 		return;
 	}
 
-	if (batteryLevel >= upperLimit) {
+	setBatteryFn(batteryLevel);
+
+	if (batteryLevelPercent >= upperLimit) {
 		setPowerStateFn(false);
 		handle_power_state_fn(false);
-	} else if (batteryLevel <= lowerLimit) {
+	} else if (batteryLevelPercent <= lowerLimit) {
 		setPowerStateFn(true);
 		handle_power_state_fn(true);
 	}
@@ -67,6 +75,7 @@ async function check_battery_level() {
 export default function Home() {
 	// const [time, setTime] = useState(Date.now());
 	const [battery, setBattery] = useState(null);
+	setBatteryFn = setBattery;
 	const [powerState, setPowerState] = useState(false);
 	setPowerStateFn = setPowerState;
 	const [autoMode, setAutoMode] = useState(false);
@@ -75,16 +84,55 @@ export default function Home() {
 	const [showBanner, setShowBanner] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
 
-	let _subscription = null;
+	const [appState, setAppState] = useState(null);
 
-	const _subscribe = async () => {
-		const batteryLevel = await Battery.getBatteryLevelAsync();
-		setBattery(batteryLevel);
-		_subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-			setBattery(batteryLevel);
-			console.log("batteryLevel changed!", batteryLevel);
-		});
+	let batteryLevelInterval = null;
+
+	const onAppStateChange = async (nextAppState) => {
+		console.log(
+			`onAppStateChange: appState from ${appState} to ${nextAppState}`
+		);
+		// cold start
+		if (appState === null) {
+			// do whatever you need on cold start
+		}
+		// come to foreground from background
+		else if (
+			appState.match(/inactive|background/) &&
+			nextAppState === "active"
+		) {
+			// do whatever you need on resume
+			let battery_level = await Battery.getBatteryLevelAsync();
+			setBattery(battery_level);
+
+			if (!batteryLevelInterval) {
+				batteryLevelInterval = setInterval(async () => {
+					let battery_level = await Battery.getBatteryLevelAsync();
+					setBattery(battery_level);
+				}, 30 * 1000);
+			}
+		} else if (
+			appState === "active" &&
+			nextAppState.match(/inactive|background/)
+		) {
+			clearInterval(batteryLevelInterval);
+		}
+		setAppState(nextAppState);
 	};
+
+	useEffect(() => {
+		AppState.addEventListener("change", onAppStateChange);
+		if (appState === null) {
+			// The event is not triggered on cold start since the change has already taken place
+			// therefore we need to call it manually.
+			onAppStateChange(AppState.currentState);
+		}
+		return () => {
+			AppState.removeEventListener("change", onAppStateChange);
+		};
+	}, [appState]);
+
+	let _subscription = null;
 
 	const _unsubscribe = () => {
 		_subscription && _subscription.remove();
@@ -92,11 +140,18 @@ export default function Home() {
 	};
 
 	useEffect(async () => {
-		await _subscribe();
+		let battery_level = await Battery.getBatteryLevelAsync();
+		setBattery(battery_level);
+
+		batteryLevelInterval = setInterval(async () => {
+			let battery_level = await Battery.getBatteryLevelAsync();
+			setBattery(battery_level);
+		}, 30 * 1000);
+
 		await update_power_state();
 
 		return () => {
-			_unsubscribe();
+			clearInterval(batteryLevelInterval);
 		};
 	}, []);
 
