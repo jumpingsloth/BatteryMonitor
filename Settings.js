@@ -101,64 +101,66 @@ export default function Settings() {
 	}, [showBanner]);
 
 	return (
-		<KeyboardAwareScrollView
-			style={styles.container}
-			contentContainerStyle={styles.contentContainer}
-			resetScrollToCoords={{ x: 0, y: 0 }}
-			enableOnAndroid={true}
-		>
-			{showBanner && (
-				<View style={styles.banner}>
-					<Text style={styles.bannerText}>Save Successfull</Text>
+		<View style={{ flex: 1 }}>
+			<KeyboardAwareScrollView
+				style={styles.container}
+				contentContainerStyle={styles.contentContainer}
+				resetScrollToCoords={{ x: 0, y: 0 }}
+				enableOnAndroid={true}
+			>
+				{showBanner && (
+					<View style={styles.banner}>
+						<Text style={styles.bannerText}>Save Successfull</Text>
+					</View>
+				)}
+
+				<View style={{ paddingVertical: 20 }}>
+					<TextEditComponent
+						name="Upper Battery Limit %"
+						value={upperLimit}
+						update={setUpperLimit}
+						keyboardType="numeric"
+					/>
+					<TextEditComponent
+						name="Lower Battery Limit %"
+						value={lowerLimit}
+						update={setLowerLimit}
+						keyboardType="numeric"
+					/>
+					<TextEditComponent
+						name="Email"
+						value={email}
+						update={setEmail}
+						keyboardType="email-address"
+					/>
+					<TextEditComponent
+						name="Password"
+						value={password}
+						update={setPassword}
+						secureTextEntry={true}
+					/>
+
+					<TextEditComponent
+						name="Device Name"
+						value={devicename}
+						update={setDevicename}
+					/>
+
+					<TextEditComponent
+						name="Server URL"
+						value={server}
+						update={setServer}
+					/>
+
+					<TouchableOpacity
+						style={styles.saveButton}
+						onPress={onEditDone}
+					>
+						<Text style={styles.saveButtonText}>Save Changes</Text>
+					</TouchableOpacity>
 				</View>
-			)}
-
-			<View style={{ paddingVertical: 20 }}>
-				<TextEditComponent
-					name="Upper Battery Limit %"
-					value={upperLimit}
-					update={setUpperLimit}
-					keyboardType="numeric"
-				/>
-				<TextEditComponent
-					name="Lower Battery Limit %"
-					value={lowerLimit}
-					update={setLowerLimit}
-					keyboardType="numeric"
-				/>
-				<TextEditComponent
-					name="Email"
-					value={email}
-					update={setEmail}
-					keyboardType="email-address"
-				/>
-				<TextEditComponent
-					name="Password"
-					value={password}
-					update={setPassword}
-					secureTextEntry={true}
-				/>
-
-				<TextEditComponent
-					name="Device Name"
-					value={devicename}
-					update={setDevicename}
-				/>
-
-				<TextEditComponent
-					name="Server URL"
-					value={server}
-					update={setServer}
-				/>
-
-				<TouchableOpacity
-					style={styles.saveButton}
-					onPress={onEditDone}
-				>
-					<Text style={styles.saveButtonText}>Save Changes</Text>
-				</TouchableOpacity>
-			</View>
-		</KeyboardAwareScrollView>
+			</KeyboardAwareScrollView>
+		</View>
 	);
 }
 

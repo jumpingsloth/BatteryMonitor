@@ -18,10 +18,14 @@ import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import { useDidMountEffect } from "./custom_hooks.js";
 import * as SecureStore from "expo-secure-store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TASK_NAME = "BATTERY_MONITOR";
 TaskManager.defineTask(TASK_NAME, async () => {
 	console.log(new Date.getTime());
+	setLogTextFn((prev) => {
+		return "Background task: " + new Date.getTime() + "\n" + prev;
+	});
 	check_battery_level();
 	return BackgroundFetch.BackgroundFetchResult.NewData;
 });
@@ -39,6 +43,10 @@ let handle_power_state_fn = () => {
 };
 
 let setBatteryFn = () => {
+	console.log("State not yet initialized");
+};
+
+let setLogTextFn = () => {
 	console.log("State not yet initialized");
 };
 
@@ -64,9 +72,15 @@ async function check_battery_level() {
 	setBatteryFn(batteryLevel);
 
 	if (batteryLevelPercent >= upperLimit) {
+		setLogTextFn((prev) => {
+			return "Check Battery Level: " + "deactivate\n" + prev;
+		});
 		setPowerStateFn(false);
 		handle_power_state_fn(false);
 	} else if (batteryLevelPercent <= lowerLimit) {
+		setLogTextFn((prev) => {
+			return "Check Battery Level: " + "activate\n" + prev;
+		});
 		setPowerStateFn(true);
 		handle_power_state_fn(true);
 	}
@@ -86,6 +100,17 @@ export default function Home() {
 
 	const [appState, setAppState] = useState(null);
 
+	const [logText, setLogText] = useState("");
+	setLogTextFn = setLogText;
+
+	const [showLogs, setShowLogs] = useState(false);
+
+	const logData = (text) => {
+		setLogText((prev) => {
+			return text + "\n" + prev;
+		});
+	};
+
 	let batteryLevelInterval = null;
 
 	const onAppStateChange = async (nextAppState) => {
@@ -102,6 +127,8 @@ export default function Home() {
 			nextAppState === "active"
 		) {
 			// do whatever you need on resume
+			logData("Background --> Active");
+
 			let battery_level = await Battery.getBatteryLevelAsync();
 			setBattery(battery_level);
 
@@ -111,10 +138,13 @@ export default function Home() {
 					setBattery(battery_level);
 				}, 30 * 1000);
 			}
+
+			check_battery_level();
 		} else if (
 			appState === "active" &&
 			nextAppState.match(/inactive|background/)
 		) {
+			logData("Active --> Background");
 			clearInterval(batteryLevelInterval);
 		}
 		setAppState(nextAppState);
@@ -158,17 +188,23 @@ export default function Home() {
 	useDidMountEffect(async () => {
 		console.log("auto mode state (handleAutoMode): " + autoMode);
 		if (autoMode) {
+			logData("Starting Auto Mode");
+			handle_power_state(true);
+			setAutoMode(true);
 			await check_battery_level();
 			let ret = await startAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Cannot start auto mode");
+				logData("Cannot start auto mode");
 			}
 		} else {
+			logData("Stopping Auto Mode");
 			setPowerState(false);
 			handle_power_state(false);
 			let ret = await stopAutoMode(TASK_NAME);
 			if (ret == -1) {
 				console.log("Cannot stop auto mode");
+				logData("Cannot stop auto mode");
 			}
 		}
 	}, [autoMode]);
@@ -277,7 +313,7 @@ export default function Home() {
 			>
 				<View
 					style={{
-						flex: 15,
+						flex: 1,
 						paddingVertical: 10,
 						paddingHorizontal: 20,
 						flexDirection: "column",
@@ -344,8 +380,44 @@ export default function Home() {
 								value={powerState}
 							/>
 						</View>
+
+						<View style={styles.modeSwitch}>
+							<Text style={styles.modeText}>Show Logs</Text>
+							<Switch
+								onValueChange={(val) => {
+									setShowLogs(val);
+								}}
+								value={showLogs}
+							/>
+						</View>
 					</View>
 				</View>
+				{showLogs && (
+					<View style={{ marginHorizontal: 20 }}>
+						<Text
+							style={{
+								fontSize: 16,
+								color: "grey",
+							}}
+						>
+							Logs:
+						</Text>
+
+						<View
+							style={{
+								borderWidth: 2,
+								borderRadius: 5,
+								borderColor: "grey",
+								marginTop: 15,
+								paddingHorizontal: 10,
+								paddingVertical: 20,
+							}}
+							contentContainerstyle={{}}
+						>
+							<Text style={{ color: "grey" }}>{logText}</Text>
+						</View>
+					</View>
+				)}
 			</ScrollView>
 		</View>
 	);
@@ -353,7 +425,9 @@ export default function Home() {
 
 const styles = {
 	container: {
-		flex: 1,
+		marginTop: 10,
+		// flex: 1,
+		// flexGrow: 1,
 		// flexDirection: "column",
 	},
 	text: {
